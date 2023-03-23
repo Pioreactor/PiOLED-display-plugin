@@ -1,2 +1,2 @@
-recursive-include src/ui/ *.yaml
-include src/additional_config.ini
+recursive-include pioled_display_plugin/ui/ *.yaml
+include pioled_display_plugin/additional_config.ini

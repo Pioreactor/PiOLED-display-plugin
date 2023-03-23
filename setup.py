@@ -2,8 +2,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="piOLED-display-plugin",
-    version="0.0.1",
+    name="piOLED_display_plugin",
+    version="0.0.2",
     license_files = ('LICENSE.txt',),
     description="Use an OLED display with your Pioreactor",
     long_description=open("README.md").read(),
@@ -15,6 +15,6 @@ setup(
     include_package_data=True,
     install_requires=["adafruit-circuitpython-ssd1306"],
     entry_points={
-        "pioreactor.plugins": "piOLED-display-plugin = src"
+        "pioreactor.plugins": "piOLED_display_plugin = piOLED_display_plugin"
     },
 )
