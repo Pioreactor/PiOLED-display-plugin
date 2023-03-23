@@ -7,7 +7,7 @@ import click
 
 from msgspec.json import decode
 from pioreactor.hardware import SCL, SDA
-from piroeactor.whoami import get_unit_name, get_latest_experiment_name
+from pioreactor.whoami import get_unit_name, get_latest_experiment_name
 from pioreactor import structs
 from pioreactor.background_jobs.base import BackgroundJobContrib
 from pioreactor import types as pt
@@ -18,7 +18,7 @@ class PiOLEDDisplay(BackgroundJobContrib):
     job_name = "piOLED_display"
 
     def __init__(self, unit: str, experiment: str):
-        super().__init__(unit, experiment, source="PiOLED_display_plugin")
+        super().__init__(unit, experiment, plugin_name="PiOLED-display-plugin")
 
         # Create the I2C interface.
         i2c = busio.I2C(SCL, SDA)
@@ -61,21 +61,21 @@ class PiOLEDDisplay(BackgroundJobContrib):
         self.start_passive_listeners()
 
 
-    def update_od(self, msg: pt.MQTTMessage);
+    def update_od(self, msg: pt.MQTTMessage):
         if msg.payload:
             self.od = decode(msg.payload, type=structs.ODFiltered).od_filtered
         else:
             self.od = None
         self.update_display()
 
-    def update_temp(self, msg: pt.MQTTMessage);
+    def update_temp(self, msg: pt.MQTTMessage):
         if msg.payload:
             self.growth_rate = decode(msg.payload, type=structs.GrowthRate).growth_rate
         else:
             self.growth_rate = None
         self.update_display()
 
-    def update_growth_rate(self, msg: pt.MQTTMessage);
+    def update_growth_rate(self, msg: pt.MQTTMessage):
         if msg.payload:
             self.temp = decode(msg.payload, type=structs.Temperature).temperature
         else:
@@ -87,7 +87,7 @@ class PiOLEDDisplay(BackgroundJobContrib):
         self.subscribe_and_callback(self.update_growth_rate, f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/growth_rate", allow_retained=False)
         self.subscribe_and_callback(self.update_temp, f"pioreactor/{self.unit}/{self.experiment}/temperature_control/temperature", allow_retained=False)
 
-    def update_display(self)
+    def update_display(self):
         # Draw a black filled box to clear the image.
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=0)
         # Write four lines of text.

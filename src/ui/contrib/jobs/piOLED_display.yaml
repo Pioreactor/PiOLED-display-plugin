@@ -1,0 +1,7 @@
+---
+display_name: Display
+job_name: piOLED_display
+display: true  # true to display on the /Pioreactors card
+source: PiOLED_display_plugin
+description: Turn on the OLED display
+published_settings: []

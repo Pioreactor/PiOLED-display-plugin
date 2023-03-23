@@ -1,0 +1,2 @@
+recursive-include src/ui/ *.yaml
+include src/additional_config.ini
