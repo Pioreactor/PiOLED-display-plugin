@@ -104,6 +104,14 @@ class PiOLEDDisplay(BackgroundJobContrib):
             f"pioreactor/{self.unit}/{self.experiment}/temperature_control/temperature",
         )
 
+    def clear_display(self):
+        self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=0)
+        self.disp.image(self.image)
+        self.disp.show()
+
+    def on_disconnected(self):
+        self.clear_display()
+
     def update_display(self) -> None:
         # Draw a black filled box to clear the image.
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=0)
