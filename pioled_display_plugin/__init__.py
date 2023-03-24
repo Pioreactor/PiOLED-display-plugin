@@ -28,7 +28,7 @@ class PiOLEDDisplay(BackgroundJobContrib):
     temp: Optional[float] = None
 
     def __init__(self, unit: str, experiment: str) -> None:
-        super().__init__(unit, experiment, plugin_name="pioled_display_plugin")
+        super().__init__(unit=unit, experiment=experiment, plugin_name="pioled_display_plugin")
 
         # Create the I2C interface.
         i2c = busio.I2C(SCL, SDA)
@@ -38,6 +38,8 @@ class PiOLEDDisplay(BackgroundJobContrib):
         except Exception:
             self.logger.error("Unable to find hardware")
             self.clean_up()
+
+        # rotate the screen since we are flipping it
         self.disp.rotation = 2
 
         # Clear display.
@@ -74,14 +76,14 @@ class PiOLEDDisplay(BackgroundJobContrib):
             self.od = None
         self.update_display()
 
-    def update_temp(self, msg: pt.MQTTMessage) -> None:
+    def update_growth_rate(self, msg: pt.MQTTMessage) -> None:
         if msg.payload:
             self.growth_rate = decode(msg.payload, type=structs.GrowthRate).growth_rate
         else:
             self.growth_rate = None
         self.update_display()
 
-    def update_growth_rate(self, msg: pt.MQTTMessage) -> None:
+    def update_temp(self, msg: pt.MQTTMessage) -> None:
         if msg.payload:
             self.temp = decode(msg.payload, type=structs.Temperature).temperature
         else:
@@ -92,17 +94,14 @@ class PiOLEDDisplay(BackgroundJobContrib):
         self.subscribe_and_callback(
             self.update_od,
             f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/od_filtered",
-            allow_retained=False,
         )
         self.subscribe_and_callback(
             self.update_growth_rate,
             f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/growth_rate",
-            allow_retained=False,
         )
         self.subscribe_and_callback(
             self.update_temp,
             f"pioreactor/{self.unit}/{self.experiment}/temperature_control/temperature",
-            allow_retained=False,
         )
 
     def update_display(self) -> None:
@@ -113,21 +112,21 @@ class PiOLEDDisplay(BackgroundJobContrib):
         if self.growth_rate:
             self.draw.text(
                 (self.x, self.top + 8),
-                f"  Growth rate: {self.growth_rate:.2f}/h",
+                f" Growth rate: {self.growth_rate:.2f}/h",
                 font=self.font,
                 fill=255,
             )
         if self.od:
             self.draw.text(
                 (self.x, self.top + 16),
-                f"  OD:          {self.od:.2f} AU",
+                f" nOD:         {self.od:.2f} AU",
                 font=self.font,
                 fill=255,
             )
         if self.temp:
             self.draw.text(
                 (self.x, self.top + 25),
-                f"  Temp:        {self.temp:.0f} C",
+                f" Temperature: {self.temp:.1f} C",
                 font=self.font,
                 fill=255,
             )
@@ -139,5 +138,8 @@ class PiOLEDDisplay(BackgroundJobContrib):
 
 @click.command(name="pioled_display")
 def click_pioled_display():
+    """
+    Turn on the OLED display
+    """
     lg = PiOLEDDisplay(unit=get_unit_name(), experiment=get_latest_experiment_name())
     lg.block_until_disconnected()
