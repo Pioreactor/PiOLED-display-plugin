@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from typing import Optional
+
 import adafruit_ssd1306
 import busio
 import click
@@ -21,7 +23,11 @@ class PiOLEDDisplay(BackgroundJobContrib):
 
     job_name = "pioled_display"
 
-    def __init__(self, unit: str, experiment: str):
+    growth_rate: Optional[float] = None
+    od: Optional[float] = None
+    temp: Optional[float] = None
+
+    def __init__(self, unit: str, experiment: str) -> None:
         super().__init__(unit, experiment, plugin_name="pioled_display_plugin")
 
         # Create the I2C interface.
@@ -58,36 +64,31 @@ class PiOLEDDisplay(BackgroundJobContrib):
         # Load default font.
         self.font = ImageFont.load_default()
 
-        # intialize data
-        self.growth_rate = None
-        self.od = None
-        self.temp = None
-
         self.update_display()
         self.start_passive_listeners()
 
-    def update_od(self, msg: pt.MQTTMessage):
+    def update_od(self, msg: pt.MQTTMessage) -> None:
         if msg.payload:
             self.od = decode(msg.payload, type=structs.ODFiltered).od_filtered
         else:
             self.od = None
         self.update_display()
 
-    def update_temp(self, msg: pt.MQTTMessage):
+    def update_temp(self, msg: pt.MQTTMessage) -> None:
         if msg.payload:
             self.growth_rate = decode(msg.payload, type=structs.GrowthRate).growth_rate
         else:
             self.growth_rate = None
         self.update_display()
 
-    def update_growth_rate(self, msg: pt.MQTTMessage):
+    def update_growth_rate(self, msg: pt.MQTTMessage) -> None:
         if msg.payload:
             self.temp = decode(msg.payload, type=structs.Temperature).temperature
         else:
             self.temp = None
         self.update_display()
 
-    def start_passive_listeners(self):
+    def start_passive_listeners(self) -> None:
         self.subscribe_and_callback(
             self.update_od,
             f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/od_filtered",
@@ -104,7 +105,7 @@ class PiOLEDDisplay(BackgroundJobContrib):
             allow_retained=False,
         )
 
-    def update_display(self):
+    def update_display(self) -> None:
         # Draw a black filled box to clear the image.
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=0)
         # Write four lines of text.
