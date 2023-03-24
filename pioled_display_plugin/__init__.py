@@ -15,10 +15,10 @@ from pioreactor import types as pt
 
 class PiOLEDDisplay(BackgroundJobContrib):
 
-    job_name = "piOLED_display"
+    job_name = "pioled_display"
 
     def __init__(self, unit: str, experiment: str):
-        super().__init__(unit, experiment, plugin_name="PiOLED-display-plugin")
+        super().__init__(unit, experiment, plugin_name="pioled_display_plugin")
 
         # Create the I2C interface.
         i2c = busio.I2C(SCL, SDA)
@@ -104,7 +104,7 @@ class PiOLEDDisplay(BackgroundJobContrib):
         self.disp.show()
 
 
-@click.command(name="piOLED_display")
+@click.command(name="pioled_display")
 def click_pioled_display():
     lg = PiOLEDDisplay(
         unit=get_unit_name(), experiment=get_latest_experiment_name()
