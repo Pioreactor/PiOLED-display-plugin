@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 
-import busio
-from PIL import Image, ImageDraw, ImageFont
 import adafruit_ssd1306
+import busio
 import click
-
 from msgspec.json import decode
-from pioreactor.hardware import SCL, SDA
-from pioreactor.whoami import get_unit_name, get_latest_experiment_name
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 from pioreactor import structs
-from pioreactor.background_jobs.base import BackgroundJobContrib
 from pioreactor import types as pt
+from pioreactor.background_jobs.base import BackgroundJobContrib
+from pioreactor.hardware import SCL
+from pioreactor.hardware import SDA
+from pioreactor.whoami import get_latest_experiment_name
+from pioreactor.whoami import get_unit_name
 
 
 class PiOLEDDisplay(BackgroundJobContrib):
@@ -23,7 +27,11 @@ class PiOLEDDisplay(BackgroundJobContrib):
         # Create the I2C interface.
         i2c = busio.I2C(SCL, SDA)
 
-        self.disp = adafruit_ssd1306.SSD1306_I2C(128, 32, i2c)
+        try:
+            self.disp = adafruit_ssd1306.SSD1306_I2C(128, 32, i2c)
+        except Exception:
+            self.logger.error("Unable to find hardware")
+            self.clean_up()
         self.disp.rotation = 2
 
         # Clear display.
@@ -39,7 +47,6 @@ class PiOLEDDisplay(BackgroundJobContrib):
         # Get drawing object to draw on image.
         self.draw = ImageDraw.Draw(self.image)
 
-
         # Draw some shapes.
         # First define some constants to allow easy resizing of shapes.
         padding = -2
@@ -47,7 +54,6 @@ class PiOLEDDisplay(BackgroundJobContrib):
         self.bottom = self.height - padding
         # Move left to right keeping track of the current x position for drawing shapes.
         self.x = 0
-
 
         # Load default font.
         self.font = ImageFont.load_default()
@@ -59,7 +65,6 @@ class PiOLEDDisplay(BackgroundJobContrib):
 
         self.update_display()
         self.start_passive_listeners()
-
 
     def update_od(self, msg: pt.MQTTMessage):
         if msg.payload:
@@ -83,9 +88,21 @@ class PiOLEDDisplay(BackgroundJobContrib):
         self.update_display()
 
     def start_passive_listeners(self):
-        self.subscribe_and_callback(self.update_od, f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/od_filtered", allow_retained=False)
-        self.subscribe_and_callback(self.update_growth_rate, f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/growth_rate", allow_retained=False)
-        self.subscribe_and_callback(self.update_temp, f"pioreactor/{self.unit}/{self.experiment}/temperature_control/temperature", allow_retained=False)
+        self.subscribe_and_callback(
+            self.update_od,
+            f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/od_filtered",
+            allow_retained=False,
+        )
+        self.subscribe_and_callback(
+            self.update_growth_rate,
+            f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/growth_rate",
+            allow_retained=False,
+        )
+        self.subscribe_and_callback(
+            self.update_temp,
+            f"pioreactor/{self.unit}/{self.experiment}/temperature_control/temperature",
+            allow_retained=False,
+        )
 
     def update_display(self):
         # Draw a black filled box to clear the image.
@@ -93,11 +110,26 @@ class PiOLEDDisplay(BackgroundJobContrib):
         # Write four lines of text.
         self.draw.text((self.x, self.top + 0), self.unit, font=self.font, fill=255)
         if self.growth_rate:
-            self.draw.text((self.x, self.top + 8),  f"  Growth rate: {self.growth_rate:.2f}/h", font=self.font, fill=255)
+            self.draw.text(
+                (self.x, self.top + 8),
+                f"  Growth rate: {self.growth_rate:.2f}/h",
+                font=self.font,
+                fill=255,
+            )
         if self.od:
-            self.draw.text((self.x, self.top + 16), f"  OD:          {self.od:.2f} AU", font=self.font, fill=255)
+            self.draw.text(
+                (self.x, self.top + 16),
+                f"  OD:          {self.od:.2f} AU",
+                font=self.font,
+                fill=255,
+            )
         if self.temp:
-            self.draw.text((self.x, self.top + 25), f"  Temp:        {self.temp:.0f} C", font=self.font, fill=255)
+            self.draw.text(
+                (self.x, self.top + 25),
+                f"  Temp:        {self.temp:.0f} C",
+                font=self.font,
+                fill=255,
+            )
 
         # Display image.
         self.disp.image(self.image)
@@ -106,8 +138,5 @@ class PiOLEDDisplay(BackgroundJobContrib):
 
 @click.command(name="pioled_display")
 def click_pioled_display():
-    lg = PiOLEDDisplay(
-        unit=get_unit_name(), experiment=get_latest_experiment_name()
-    )
+    lg = PiOLEDDisplay(unit=get_unit_name(), experiment=get_latest_experiment_name())
     lg.block_until_disconnected()
-
