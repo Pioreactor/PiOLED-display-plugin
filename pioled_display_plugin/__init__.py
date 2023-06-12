@@ -36,9 +36,10 @@ class PiOLEDDisplay(BackgroundJobContrib):
 
         try:
             self.disp = adafruit_ssd1306.SSD1306_I2C(128, 32, i2c)
-        except Exception:
+        except Exception as e:
             self.logger.error("Unable to find hardware")
             self.clean_up()
+            raise e
 
         # get ip for displaying
         self._ip = get_ip()
