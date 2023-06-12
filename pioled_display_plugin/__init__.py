@@ -15,8 +15,9 @@ from pioreactor import types as pt
 from pioreactor.background_jobs.base import BackgroundJobContrib
 from pioreactor.hardware import SCL
 from pioreactor.hardware import SDA
-from pioreactor.whoami import get_latest_experiment_name
+from pioreactor.utils.networking import get_ip
 from pioreactor.whoami import get_unit_name
+from pioreactor.whoami import UNIVERSAL_EXPERIMENT
 
 
 class PiOLEDDisplay(BackgroundJobContrib):
@@ -38,6 +39,9 @@ class PiOLEDDisplay(BackgroundJobContrib):
         except Exception:
             self.logger.error("Unable to find hardware")
             self.clean_up()
+
+        # get ip for displaying
+        self._ip = get_ip()
 
         # rotate the screen since we are flipping it
         self.disp.rotation = 2
@@ -93,15 +97,18 @@ class PiOLEDDisplay(BackgroundJobContrib):
     def start_passive_listeners(self) -> None:
         self.subscribe_and_callback(
             self.update_od,
-            f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/od_filtered",
+            f"pioreactor/{self.unit}/+/growth_rate_calculating/od_filtered",
+            allow_retained=False,
         )
         self.subscribe_and_callback(
             self.update_growth_rate,
-            f"pioreactor/{self.unit}/{self.experiment}/growth_rate_calculating/growth_rate",
+            f"pioreactor/{self.unit}/+/growth_rate_calculating/growth_rate",
+            allow_retained=False,
         )
         self.subscribe_and_callback(
             self.update_temp,
-            f"pioreactor/{self.unit}/{self.experiment}/temperature_control/temperature",
+            f"pioreactor/{self.unit}/+/temperature_control/temperature",
+            allow_retained=False,
         )
 
     def clear_display(self):
@@ -111,6 +118,10 @@ class PiOLEDDisplay(BackgroundJobContrib):
 
     def on_disconnected(self):
         self.clear_display()
+
+    def update_display_and_increment_whoami(self):
+        self._whoami_counter += 1
+        self.update_display()
 
     def update_display(self) -> None:
         # Draw a black filled box to clear the image.
@@ -139,6 +150,14 @@ class PiOLEDDisplay(BackgroundJobContrib):
                 fill=255,
             )
 
+        if not self.temp and not self.od and not self.growth_rate:
+            self.draw.text(
+                (self.x, self.top + 8),
+                f" IP: {self._ip}",
+                font=self.font,
+                fill=255,
+            )
+
         # Display image.
         self.disp.image(self.image)
         self.disp.show()
@@ -149,5 +168,5 @@ def click_pioled_display():
     """
     Turn on the OLED display
     """
-    lg = PiOLEDDisplay(unit=get_unit_name(), experiment=get_latest_experiment_name())
+    lg = PiOLEDDisplay(unit=get_unit_name(), experiment=UNIVERSAL_EXPERIMENT)
     lg.block_until_disconnected()

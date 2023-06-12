@@ -1,2 +1,2 @@
-recursive-include pioled_display_plugin/ui/ *.yaml
-include pioled_display_plugin/additional_config.ini
+include pioled_display_plugin/post_install.sh
+include pioled_display_plugin/pre_uninstall.sh
