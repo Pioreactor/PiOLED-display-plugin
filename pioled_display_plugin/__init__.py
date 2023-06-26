@@ -13,11 +13,16 @@ from PIL import ImageFont
 from pioreactor import structs
 from pioreactor import types as pt
 from pioreactor.background_jobs.base import BackgroundJobContrib
+from pioreactor.cli.pio import JOBS_TO_SKIP_KILLING
 from pioreactor.hardware import SCL
 from pioreactor.hardware import SDA
 from pioreactor.utils.networking import get_ip
 from pioreactor.whoami import get_unit_name
 from pioreactor.whoami import UNIVERSAL_EXPERIMENT
+
+# since this is a long-running job, we don't want it to be killed by pio kill --all-jobs.
+
+JOBS_TO_SKIP_KILLING.append("pioled_display")
 
 
 class PiOLEDDisplay(BackgroundJobContrib):
@@ -37,7 +42,7 @@ class PiOLEDDisplay(BackgroundJobContrib):
         try:
             self.disp = adafruit_ssd1306.SSD1306_I2C(128, 32, i2c)
         except Exception as e:
-            self.logger.error("Unable to find hardware")
+            self.logger.error("Unable to find PiOLED hardware. Is it attached?")
             self.clean_up()
             raise e
 
