@@ -5,7 +5,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 setup(
-    name="pioled_display_plugin",
+    name="pioled-display-plugin",
     version="0.2.3",
     license_files=("LICENSE.txt",),
     description="Use an OLED display with your Pioreactor",
