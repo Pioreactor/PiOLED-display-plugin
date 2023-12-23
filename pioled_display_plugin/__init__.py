@@ -117,17 +117,16 @@ class PiOLEDDisplay(BackgroundJobContrib):
             allow_retained=False,
         )
 
-    def clear_display(self):
+    def clear_display(self) -> None:
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=0)
         self.disp.image(self.image)
         self.disp.show()
 
-    def on_disconnected(self):
-        self.clear_display()
-
-    def update_display_and_increment_whoami(self):
-        self._whoami_counter += 1
-        self.update_display()
+    def on_disconnected(self) -> None:
+        try:
+            self.clear_display()
+        except Exception:
+            pass
 
     def update_display(self) -> None:
         # Draw a black filled box to clear the image.
@@ -170,7 +169,7 @@ class PiOLEDDisplay(BackgroundJobContrib):
 
 
 @click.command(name="pioled_display")
-def click_pioled_display():
+def click_pioled_display() -> None:
     """
     Turn on the OLED display
     """
