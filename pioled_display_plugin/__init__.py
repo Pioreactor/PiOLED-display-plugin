@@ -113,7 +113,7 @@ class PiOLEDDisplay(BackgroundJobContrib):
         )
         self.subscribe_and_callback(
             self.update_temp,
-            f"pioreactor/{self.unit}/+/temperature_control/temperature",
+            f"pioreactor/{self.unit}/+/temperature_automation/temperature",
             allow_retained=False,
         )
 
