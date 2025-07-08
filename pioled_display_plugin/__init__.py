@@ -12,19 +12,15 @@ from PIL import ImageDraw
 from PIL import ImageFont
 from pioreactor import structs
 from pioreactor import types as pt
-from pioreactor.background_jobs.base import BackgroundJobContrib
+from pioreactor.background_jobs.base import LongRunningBackgroundJobContrib
 from pioreactor.hardware import SCL
 from pioreactor.hardware import SDA
-from pioreactor.utils import JobManager
 from pioreactor.utils.networking import get_ip
 from pioreactor.whoami import get_unit_name
 from pioreactor.whoami import UNIVERSAL_EXPERIMENT
 
-# since this is a long-running job, we don't want it to be killed by pio kill --all-jobs.
-JobManager.LONG_RUNNING_JOBS = JobManager.LONG_RUNNING_JOBS + ("pioled_display",)
 
-
-class PiOLEDDisplay(BackgroundJobContrib):
+class PiOLEDDisplay(LongRunningBackgroundJobContrib):
 
     job_name = "pioled_display"
 
@@ -172,5 +168,5 @@ def click_pioled_display() -> None:
     """
     Turn on the OLED display
     """
-    lg = PiOLEDDisplay(unit=get_unit_name(), experiment=UNIVERSAL_EXPERIMENT)
-    lg.block_until_disconnected()
+    with PiOLEDDisplay(unit=get_unit_name(), experiment=UNIVERSAL_EXPERIMENT) as lg:
+        lg.block_until_disconnected()
